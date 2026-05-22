@@ -2,6 +2,8 @@ FROM node:24
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y curl
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json tsconfig.base.json ./
 COPY artifacts ./artifacts
 COPY lib ./lib

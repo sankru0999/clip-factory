@@ -134,4 +134,39 @@ router.post("/memes/ad-reward", (_req, res) => {
   });
 });
 
+router.get("/memes/download-proxy", async (req, res) => {
+  const { url } = req.query;
+  if (!url || typeof url !== "string") {
+    res.status(400).json({ error: "Missing url param" });
+    return;
+  }
+  // Only allow imgflip.com URLs for safety
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    res.status(400).json({ error: "Invalid URL" });
+    return;
+  }
+  if (!parsed.hostname.endsWith("imgflip.com")) {
+    res.status(403).json({ error: "Only imgflip.com URLs are allowed" });
+    return;
+  }
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      res.status(502).json({ error: "Failed to fetch image" });
+      return;
+    }
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", "attachment");
+    const buffer = await response.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error("[download-proxy]", err);
+    res.status(502).json({ error: "Proxy fetch failed" });
+  }
+});
+
 export default router;

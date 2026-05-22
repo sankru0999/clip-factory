@@ -24,23 +24,21 @@ export function AdRewardWall({ language, onRewardClaimed }: AdRewardWallProps) {
   }, [countdown]);
 
   const handleWatchAd = () => {
-    // In a real app we'd fetch the ad URL or use an SDK.
-    // Assuming ADSTERRA_AD_URL is known or we trigger a popunder:
-    const adUrl = "https://example.com/adsterra"; // Dummy placeholder
-    window.open(adUrl, "_blank");
-    setCountdown(15);
+    claimMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        const adUrl = data.ad_url || "https://www.google.com";
+        window.open(adUrl, "_blank");
+        setCountdown(15);
+      },
+      onError: () => {
+        window.open("https://www.google.com", "_blank");
+        setCountdown(15);
+      }
+    });
   };
 
   const handleClaim = () => {
-    claimMutation.mutate(undefined, {
-      onSuccess: (data) => {
-        onRewardClaimed(data.credits_granted || 3);
-      },
-      onError: () => {
-        // Fallback claim if error
-        onRewardClaimed(3);
-      }
-    });
+    onRewardClaimed(3);
   };
 
   return (
@@ -50,39 +48,44 @@ export function AdRewardWall({ language, onRewardClaimed }: AdRewardWallProps) {
           {language === "es" ? "¡SIN CRÉDITOS!" : "OUT OF CREDITS!"}
         </h2>
         <p className="text-muted-foreground mb-8 text-lg">
-          {language === "es" 
+          {language === "es"
             ? "¡Mira un anuncio corto y obtén 3 memes más! 🎬"
             : "Watch a short ad and get 3 more memes! 🎬"}
         </p>
 
         {countdown === null && !canClaim && (
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="w-full text-xl font-bold h-14 bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleWatchAd}
+            disabled={claimMutation.isPending}
             data-testid="button-watch-ad"
           >
+            {claimMutation.isPending ? (
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            ) : null}
             {language === "es" ? "Ver anuncio ▶" : "Watch ad ▶"}
           </Button>
         )}
 
         {countdown !== null && countdown > 0 && !canClaim && (
-          <div className="py-4 text-2xl font-bold font-mono text-primary">
-            {countdown}s
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-6xl font-bold font-mono text-primary tabular-nums">
+              {countdown}
+            </div>
+            <p className="text-muted-foreground text-sm">
+              {language === "es" ? "Espera el anuncio..." : "Waiting for ad..."}
+            </p>
           </div>
         )}
 
         {canClaim && (
-          <Button 
-            size="lg" 
-            className="w-full text-xl font-bold h-14 bg-primary text-primary-foreground hover:bg-primary/90"
+          <Button
+            size="lg"
+            className="w-full text-xl font-bold h-14 bg-green-500 hover:bg-green-400 text-black"
             onClick={handleClaim}
-            disabled={claimMutation.isPending}
             data-testid="button-claim-reward"
           >
-            {claimMutation.isPending ? (
-              <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            ) : null}
             {language === "es" ? "¡Reclamar mis 3 memes! 🎉" : "Claim my 3 memes! 🎉"}
           </Button>
         )}

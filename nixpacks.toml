@@ -2,4 +2,4 @@
 cmds = ["pnpm install", "pnpm run build"]
 
 [start]
-cmd = "pnpm --filter @workspace/meme-factory run serve"
+cmd = "pnpm --filter @workspace/meme-factory run serve -- --port 5000"

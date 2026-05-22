@@ -6,3 +6,4 @@ cmd = "pnpm --filter @workspace/api-server run start"
 
 [healthcheck]
 path = "/api/healthz"
+timeout = 60

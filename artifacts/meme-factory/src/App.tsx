@@ -5,6 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ClipFactory from "@/pages/clip-factory";
+import { setBaseUrl } from "@workspace/api-client-react";
+
+// Configure API base URL for deployed backend
+setBaseUrl("https://clip-factory-production-93e3.up.railway.app");
 
 const queryClient = new QueryClient();
 

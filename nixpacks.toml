@@ -5,4 +5,4 @@ cmds = ["pnpm install", "pnpm run build"]
 cmd = "pnpm --filter @workspace/api-server run start"
 
 [healthcheck]
-path = "/healthz"
+path = "/api/healthz"

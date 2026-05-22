@@ -32,7 +32,7 @@ export default defineConfig({
   plugins: [
     mockupPreviewPlugin(),
     react(),
-    tailwindcss(),
+    // tailwindcss(), // Temporarily disabled due to lightningcss native module issue
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined

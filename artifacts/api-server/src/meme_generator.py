@@ -275,12 +275,63 @@ def create_meme_imgflip(template_id: str, top_text: str, bottom_text: str) -> st
     return None
 
 
-def create_meme_pillow(top_text: str, bottom_text: str, output_path: str) -> str:
-    """Fallback: white background meme with black Impact-style text + white border."""
+def get_pixabay_background(query: str, output_path: str) -> bool:
+    """Download a relevant background image from Pixabay. Returns True if successful."""
+    api_key = os.environ.get("PIXABAY_API_KEY", "")
+    if not api_key:
+        return False
+    try:
+        params = {
+            "key": api_key,
+            "q": query[:100],
+            "image_type": "photo",
+            "orientation": "horizontal",
+            "safesearch": "true",
+            "per_page": 5,
+            "min_width": 600,
+            "min_height": 450,
+        }
+        url = "https://pixabay.com/api/?" + "&".join(f"{k}={requests.utils.quote(str(v))}" for k, v in params.items())
+        resp = requests.get(url, timeout=10)
+        data = resp.json()
+        hits = data.get("hits", [])
+        if not hits:
+            return False
+        img_url = hits[0].get("webformatURL") or hits[0].get("largeImageURL")
+        if not img_url:
+            return False
+        img_resp = requests.get(img_url, timeout=15)
+        if img_resp.status_code == 200:
+            with open(output_path, "wb") as f:
+                f.write(img_resp.content)
+            return os.path.getsize(output_path) > 1000
+    except Exception as e:
+        log_err(f"Pixabay fetch failed: {e}")
+    return False
+
+
+def create_meme_pillow(top_text: str, bottom_text: str, output_path: str, bg_query: str = "") -> str:
+    """Fallback: meme with Pixabay background (or white) + Impact-style text."""
     from PIL import Image, ImageDraw, ImageFont
 
     width, height = 600, 450
-    img = Image.new("RGB", (width, height), color=(255, 255, 255))
+
+    # Try Pixabay background first
+    bg_img = None
+    if bg_query:
+        bg_path = output_path + "_bg.jpg"
+        if get_pixabay_background(bg_query, bg_path):
+            try:
+                bg_img = Image.open(bg_path).convert("RGB")
+                bg_img = bg_img.resize((width, height), Image.LANCZOS)
+            except Exception as e:
+                log_err(f"Pixabay image open failed: {e}")
+                bg_img = None
+
+    if bg_img:
+        img = bg_img
+    else:
+        img = Image.new("RGB", (width, height), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
 
     font_size = 52
@@ -417,8 +468,9 @@ def generate_memes(youtube_url: str, language: str) -> dict:
 
             if not image_url:
                 pillow_path = os.path.join(tmpdir, f"meme_{len(memes)}.png")
+                what_happens = str(moment.get("what_happens", "")).strip()
                 try:
-                    create_meme_pillow(top_text, bottom_text, pillow_path)
+                    create_meme_pillow(top_text, bottom_text, pillow_path, bg_query=what_happens)
                     import base64
                     with open(pillow_path, "rb") as f:
                         b64 = base64.b64encode(f.read()).decode()

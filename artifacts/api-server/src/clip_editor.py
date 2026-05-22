@@ -112,21 +112,11 @@ def transcribe_video(video_path: str) -> dict:
     }
 
 
-def get_best_moments_with_gemini(transcript: str, duration: float) -> list:
-    """Use Gemini to find best 3 viral clip moments from transcript."""
-    try:
-        from google import genai
-    except ImportError:
-        return _fallback_moments(duration)
+def _build_moments_prompt(transcript: str, max_dur: float) -> str:
+    return f"""You are a viral short-form content expert who understands hooks, tension, payoffs, and what makes people stop scrolling.
 
-    if not GEMINI_API_KEY:
-        return _fallback_moments(duration)
-
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    max_dur = min(duration, 600) if duration else 300
-    clip_len = min(60, max_dur * 0.2)
-
-    prompt = f"""You are a viral content expert. Analyze this video transcript and identify the 3 best moments for viral short clips.
+Analyze this video transcript and identify the 3 BEST moments for viral short clips (TikTok/Reels/Shorts style).
+Look for: strong hooks, emotional peaks, surprising reveals, funny moments, conflict, or powerful statements.
 
 Transcript:
 {transcript[:4000]}
@@ -136,11 +126,47 @@ Video duration: {max_dur:.0f} seconds. Each clip should be 30-60 seconds long.
 Return ONLY a valid JSON array with exactly 3 objects, each with:
 - start: start time in seconds (number)
 - end: end time in seconds (number, max {max_dur:.0f})
-- reason: one sentence why this moment is viral-worthy
+- reason: one punchy sentence why this moment is viral-worthy (hook type + emotional pull)
 
 No markdown. No explanations. Only the JSON array."""
 
+
+def get_best_moments_with_ai(transcript: str, duration: float) -> list:
+    """Use Claude (primary) or Gemini (fallback) to find best viral clip moments."""
+    max_dur = min(duration, 600) if duration else 300
+    prompt = _build_moments_prompt(transcript, max_dur)
+
+    # Try Anthropic Claude first (better at narrative/hook analysis)
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if anthropic_key:
+        try:
+            import anthropic
+            client = anthropic.Anthropic(api_key=anthropic_key)
+            message = client.messages.create(
+                model="claude-3-5-haiku-20241022",
+                max_tokens=512,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            raw = message.content[0].text.strip()
+            raw = re.sub(r'^```(?:json)?\s*', '', raw)
+            raw = re.sub(r'\s*```$', '', raw)
+            moments = json.loads(raw.strip())
+            if isinstance(moments, list) and len(moments) > 0:
+                print("Using Claude for moment detection", file=sys.stderr)
+                return [{
+                    "start": max(0, float(m.get("start", 0))),
+                    "end": min(max_dur, float(m.get("end", min(60, max_dur)))),
+                    "reason": str(m.get("reason", "Viral moment"))
+                } for m in moments[:3]]
+        except Exception as e:
+            print(f"Claude moments error: {e} — falling back to Gemini", file=sys.stderr)
+
+    # Fallback: Gemini
+    if not GEMINI_API_KEY:
+        return _fallback_moments(duration)
     try:
+        from google import genai
+        client = genai.Client(api_key=GEMINI_API_KEY)
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=[prompt]
@@ -150,7 +176,7 @@ No markdown. No explanations. Only the JSON array."""
         raw = re.sub(r'\s*```$', '', raw)
         moments = json.loads(raw.strip())
         if isinstance(moments, list) and len(moments) > 0:
-            # Clamp values
+            print("Using Gemini for moment detection", file=sys.stderr)
             return [{
                 "start": max(0, float(m.get("start", 0))),
                 "end": min(max_dur, float(m.get("end", min(60, max_dur)))),
@@ -160,6 +186,11 @@ No markdown. No explanations. Only the JSON array."""
         print(f"Gemini moments error: {e}", file=sys.stderr)
 
     return _fallback_moments(duration)
+
+
+def get_best_moments_with_gemini(transcript: str, duration: float) -> list:
+    """Legacy wrapper — delegates to get_best_moments_with_ai."""
+    return get_best_moments_with_ai(transcript, duration)
 
 
 def _fallback_moments(duration: float) -> list:

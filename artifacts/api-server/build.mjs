@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
-import { rm } from "node:fs/promises";
+import { rm, copyFile } from "node:fs/promises";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
@@ -118,6 +118,19 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     `,
     },
   });
+
+  // Copy Python scripts into dist so they're available at runtime in production
+  const pyScripts = ["meme_generator.py", "clip_editor.py", "clip_moments.py"];
+  for (const script of pyScripts) {
+    const src = path.resolve(artifactDir, "src", script);
+    const dest = path.resolve(distDir, script);
+    try {
+      await copyFile(src, dest);
+      console.log(`  Copied ${script} → dist/`);
+    } catch (e) {
+      // script may not exist — skip silently
+    }
+  }
 }
 
 buildAll().catch((err) => {

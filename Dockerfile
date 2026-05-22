@@ -12,10 +12,13 @@ RUN pnpm install --ignore-scripts
 RUN pnpm rebuild esbuild
 RUN pnpm install
 
+ENV PORT=8080
 ENV BASE_PATH=/
 ENV NODE_ENV=production
 
 RUN pnpm run build
+
+ENV PORT=
 
 EXPOSE 8080
 

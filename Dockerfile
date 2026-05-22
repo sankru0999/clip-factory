@@ -8,6 +8,8 @@ COPY lib ./lib
 COPY scripts ./scripts
 
 RUN npm install -g pnpm
+RUN pnpm install --ignore-scripts
+RUN pnpm rebuild esbuild
 RUN pnpm install
 RUN pnpm run build
 

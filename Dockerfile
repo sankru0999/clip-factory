@@ -11,9 +11,11 @@ RUN npm install -g pnpm
 RUN pnpm install --ignore-scripts
 RUN pnpm rebuild esbuild
 RUN pnpm install
-RUN pnpm run build
 
 ENV PORT=8080
+ENV BASE_PATH=/
 ENV NODE_ENV=production
+
+RUN pnpm run build
 
 CMD ["pnpm", "--filter", "@workspace/api-server", "run", "start"]

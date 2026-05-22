@@ -2,8 +2,8 @@
 cmds = ["pnpm install", "pnpm run build"]
 
 [start]
-cmd = "pnpm --filter @workspace/api-server run start"
+cmd = "pnpm --filter @workspace/meme-factory run serve"
 
 [healthcheck]
-path = "/api/healthz"
+path = "/"
 timeout = 60

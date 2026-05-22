@@ -2,7 +2,7 @@ FROM node:24
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json tsconfig.base.json ./
 COPY artifacts ./artifacts
 COPY lib ./lib
 COPY scripts ./scripts

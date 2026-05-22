@@ -12,7 +12,6 @@ RUN pnpm install --ignore-scripts
 RUN pnpm rebuild esbuild
 RUN pnpm install
 
-ENV PORT=8080
 ENV BASE_PATH=/
 ENV NODE_ENV=production
 
@@ -20,4 +19,4 @@ RUN pnpm run build
 
 EXPOSE 8080
 
-CMD ["pnpm", "--filter", "@workspace/meme-factory", "run", "serve"]
+CMD ["sh", "-c", "pnpm --filter @workspace/meme-factory run serve -- --port $PORT"]

@@ -5,9 +5,9 @@
  * MemeFactory + ClipFactory API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { MemeItem } from './memeItem';
 
-export interface MemeGenerateResult {
-  memes: MemeItem[];
-  video_title: string;
+export interface ClipMoment {
+  start: number;
+  end: number;
+  reason: string;
 }

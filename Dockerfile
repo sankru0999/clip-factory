@@ -22,4 +22,4 @@ ENV PORT=
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "pnpm --filter @workspace/meme-factory run serve -- --port $PORT"]
+CMD ["sh", "-c", "pnpm --filter @workspace/meme-factory run serve -- --port ${PORT:-8080}"]

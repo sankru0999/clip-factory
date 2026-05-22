@@ -1,15 +1,16 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: MemeFactory API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: memes
+    description: Meme generation operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /memes/generate:
+    post:
+      operationId: generateMemes
+      tags: [memes]
+      summary: Generate memes from a YouTube video
+      description: Downloads a YouTube video, analyzes it with Gemini, and generates memes using Imgflip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemeGenerateInput"
+      responses:
+        "200":
+          description: Memes generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemeGenerateResult"
+        "400":
+          description: Bad request (private video, invalid URL, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /memes/ad-reward:
+    post:
+      operationId: claimAdReward
+      tags: [memes]
+      summary: Claim ad reward credits
+      description: Returns the ad URL to open and confirms reward was granted
+      responses:
+        "200":
+          description: Ad reward claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdRewardResult"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +82,81 @@ components:
       required:
         - status
 
+    MemeGenerateInput:
+      type: object
+      required:
+        - youtube_url
+        - language
+      properties:
+        youtube_url:
+          type: string
+          description: YouTube video URL to process
+        language:
+          type: string
+          enum: [en, es]
+          description: Language for meme text (en=English, es=Spanish)
+
+    MemeItem:
+      type: object
+      required:
+        - image_url
+        - timestamp
+        - what_happens
+        - top_text
+        - bottom_text
+        - template_name
+      properties:
+        image_url:
+          type: string
+          description: URL of the generated meme image
+        timestamp:
+          type: string
+          description: Timestamp in the video where this moment occurs
+        what_happens:
+          type: string
+          description: Description of what happens at this moment
+        top_text:
+          type: string
+          description: Top text of the meme
+        bottom_text:
+          type: string
+          description: Bottom text of the meme
+        template_name:
+          type: string
+          description: Name of the meme template used
+
+    MemeGenerateResult:
+      type: object
+      required:
+        - memes
+        - video_title
+      properties:
+        memes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemeItem"
+        video_title:
+          type: string
+          description: Title of the YouTube video
+
+    AdRewardResult:
+      type: object
+      required:
+        - ad_url
+        - credits_granted
+      properties:
+        ad_url:
+          type: string
+          description: URL to open for the ad
+        credits_granted:
+          type: integer
+          description: Number of credits granted after watching the ad
+
+    ApiError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message

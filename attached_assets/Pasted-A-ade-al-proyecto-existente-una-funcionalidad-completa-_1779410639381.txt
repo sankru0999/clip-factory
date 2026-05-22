@@ -1,0 +1,68 @@
+Añade al proyecto existente una funcionalidad completa de edición de clips de video con IA. Esto debe integrarse con la app actual (MemeFactory) sin romper nada existente.
+SISTEMA DE CRÉDITOS Y ANUNCIOS (MUY IMPORTANTE):
+	•	Cada generación de clip cuesta 1 crédito
+	•	El usuario empieza con 3 créditos gratis
+	•	Cada 3 generaciones (sin importar si tiene créditos o no) se muestra obligatoriamente un video anuncio antes de continuar
+	•	El video anuncio dura mínimo 5 segundos y tiene un contador regresivo visible
+	•	No se puede cerrar el anuncio hasta que termine el contador
+	•	Al terminar el anuncio se recompensan 2 créditos extra automáticamente
+	•	Si el usuario no tiene créditos, solo puede continuar viendo el anuncio
+	•	El contador de créditos siempre visible en la barra superior igual que en MemeFactory
+	•	Guardar el estado de créditos y contador de usos en localStorage para que persista entre sesiones
+FUNCIONALIDADES A AÑADIR:
+	1.	El usuario puede pegar una URL de YouTube, Twitch o Kick, O subir un video desde su dispositivo
+	2.	La IA (Claude API) analiza el video y sugiere automáticamente los 3 mejores momentos para hacer clips virales
+	3.	El usuario también puede elegir manualmente el inicio y fin del clip en segundos
+	4.	Se generan subtítulos automáticos animados con Whisper (fuente Impact, texto blanco con borde negro, posición inferior centrada)
+	5.	Se añade música sin copyright acorde al ambiente usando la API gratuita de Pixabay (moods: energetic, chill, dramatic, funny)
+	6.	Se añaden efectos de sonido (whoosh, boom, swoosh) en los momentos clave del clip
+	7.	El video final se puede descargar directamente desde la app
+STACK TÉCNICO:
+	•	yt-dlp para descargar videos de YouTube, Twitch y Kick
+	•	moviepy para cortar, editar y combinar video/audio
+	•	openai-whisper modelo “base” para transcribir y generar subtítulos
+	•	Claude API (claude-sonnet-4-20250514) para analizar la transcripción y detectar los mejores momentos — responde en JSON con start, end y reason
+	•	API de Pixabay (gratuita) para música sin copyright
+	•	Efectos de sonido locales en carpeta /sfx (whoosh.mp3, boom.mp3, swoosh.mp3)
+BACKEND — crear archivo clip_editor.py con estas funciones:
+	•	download_video(url) — descarga con yt-dlp en formato mp4
+	•	transcribe_video(path) — devuelve texto completo y segments con timestamps
+	•	get_best_moments_with_ai(transcript) — llama a Claude y devuelve lista JSON de momentos
+	•	cut_clip(path, start, end) — corta el video con moviepy
+	•	add_subtitles(path, segments) — añade subtítulos animados con TextClip
+	•	get_music(mood) — descarga música de Pixabay según el mood
+	•	add_audio_effects(path, music, sfx) — mezcla audio original + música al 30% de volumen + sfx
+	•	create_clip(url, local_file, start, end, mood) — función principal que orquesta todo
+BACKEND — añadir en app.py estos endpoints:
+	•	POST /create-clip que acepta JSON con url, start, end, mood — o multipart con archivo subido
+	•	GET /check-credits devuelve créditos actuales y si toca anuncio
+	•	POST /watch-ad registra que el usuario vio el anuncio y añade 2 créditos
+	•	Devuelve el video final con send_file para descarga directa
+FRONTEND — añadir nueva sección en la UI con:
+	•	Título “CLIP FACTORY 🎬” con el mismo estilo visual que MemeFactory (fondo negro, verde neón, fuente bold)
+	•	Input para pegar URL de YouTube / Twitch / Kick
+	•	Botón para subir video desde dispositivo (acepta mp4, mov, avi)
+	•	Selector de modo: “IA elige los mejores momentos” o “Yo elijo manualmente”
+	•	Si elige manual: dos inputs numéricos de inicio y fin en segundos
+	•	Dropdown de mood musical: Energético, Chill, Dramático, Divertido
+	•	Botón “GENERAR CLIP 🎬” con el mismo estilo verde neón del botón existente
+	•	Barra de progreso animada mientras se procesa con mensajes de estado: “Descargando video…”, “Analizando con IA…”, “Añadiendo subtítulos…”, “Mezclando audio…”
+	•	Al terminar: reproductor de video inline + botón de descarga
+MODAL DE ANUNCIO:
+	•	Fondo negro semitransparente que bloquea toda la pantalla
+	•	Video anuncio centrado (puede ser un video de placeholder de 5 segundos por ahora)
+	•	Contador regresivo en esquina superior derecha con estilo neón verde: “5… 4… 3… 2… 1…”
+	•	Texto debajo: “🎁 Recibirás 2 créditos al terminar”
+	•	Botón “CERRAR” solo se activa cuando el contador llega a 0
+	•	Animación de +2 créditos en verde cuando se cierra
+	•	No se puede cerrar con clic fuera del modal ni con tecla Escape
+VARIABLES DE ENTORNO necesarias (ya existen en Secrets de Replit):
+	•	ANTHROPIC_API_KEY
+	•	PIXABAY_API_KEY
+IMPORTANTE:
+	•	No borrar ni modificar nada del código existente de MemeFactory
+	•	Usar los mismos estilos visuales (negro, verde neón #00FF41, fuente bold)
+	•	Si ffmpeg no está instalado, añadir apt-get install ffmpeg al setup
+	•	Manejar errores con mensajes claros en pantalla si una URL no es compatible o el video es muy largo (límite 10 minutos)
+	•	Todo el procesamiento debe hacerse en el servidor, no en el cliente
+	•	El sistema de créditos del clip debe estar sincronizado con el sistema de créditos existente de MemeFactory, usando el mismo contador visible en la barra superior

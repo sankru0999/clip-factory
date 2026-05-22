@@ -1,0 +1,52 @@
+Crea una aplicación web completa llamada MemeFactory. Es una app donde el usuario pega un enlace de YouTube, la app descarga el video, Google Gemini lo analiza visualmente y genera 8-10 memes virales con plantillas reales.
+
+TECH STACK: React + Tailwind CSS para el frontend. Python + FastAPI para el backend. Librerías: yt-dlp, google-generativeai, pillow, uvicorn, python-multipart.
+
+VARIABLES DE ENTORNO: GEMINI_API_KEY, IMGFLIP_USERNAME, IMGFLIP_PASSWORD.
+
+PIPELINE:
+
+Paso 1 - El usuario pega URL de YouTube y selecciona idioma Inglés o Español. Backend descarga el video con yt-dlp en mp4 máximo 720p en /tmp.
+
+Paso 2 - Subir video a Gemini con google.generativeai upload_file, esperar que procese, enviar prompt dinámico. Si inglés: "Watch this video. Find 8-10 funny, awkward, dramatic or meme-worthy moments. Return ONLY a valid JSON array with: timestamp, what_happens, trending_template (use real meme names like Drake Hotline Bling, Distracted Boyfriend, This Is Fine, Gru Plan, Two Buttons, Surprised Pikachu, Woman Yelling at Cat, NPC, POV), top_text, bottom_text. No markdown, no explanation, only JSON array." Si español: "Mira este video. Encuentra 8-10 momentos graciosos, awkward o virales. Devuelve SOLO un JSON array con: timestamp, what_happens, trending_template (nombres reales como Drake Hotline Bling, Novio Distraído, Esto Está Bien, Plan de Gru, Dos Botones, Pikachu Sorprendido, Mujer Gritando al Gato, NPC, POV), top_text en español con jerga latina, bottom_text en español con jerga latina. Sin markdown, solo el JSON array." Borrar archivo de Gemini y /tmp después.
+
+Paso 3 - Para cada meme llamar GET https://api.imgflip.com/get_memes, buscar plantilla más cercana con matching parcial, llamar POST https://api.imgflip.com/caption_image con template_id, username, password, text0, text1. Si falla Imgflip usar Pillow con fondo blanco, texto estilo Impact con borde negro arriba y abajo, nunca fondo negro sólido.
+
+Paso 4 - Retornar array de memes con imagen URL, timestamp, what_happens al frontend.
+
+SISTEMA DE MONETIZACIÓN SIN LÍMITE:
+
+El usuario empieza con 3 generaciones gratis. Cuando llega a 0 mostrar pantalla que diga "¡Mira un anuncio corto y obtén 3 memes más! 🎬" con botón grande "Ver anuncio ▶". Al hacer clic abrir en nueva pestaña la URL que está en la variable ADSTERRA_AD_URL del entorno, y simultáneamente mostrar contador regresivo de 15 segundos en pantalla. Cuando llega a 0 mostrar botón verde "¡Reclamar mis 3 memes! 🎉". Al hacer clic sumar 3 generaciones y volver a la app. Esto se repite infinitamente, sin límite de veces. Guardar el contador de generaciones en localStorage del navegador.
+
+ANUNCIOS ADSTERRA EN LA PÁGINA:
+
+En el HTML agregar estos bloques exactos con comentarios:
+
+Bloque 1 centrado arriba del input:
+<!-- PEGA AQUÍ TU SCRIPT ADSTERRA 728x90 LEADERBOARD -->
+Ocultar en móvil con @media max-width 768px display none.
+
+Bloque 2 insertado después de cada 4 memes en el grid:
+<!-- PEGA AQUÍ TU SCRIPT ADSTERRA 300x250 RECTANGLE -->
+
+Bloque 3 fijo al fondo en móvil:
+<!-- PEGA AQUÍ TU SCRIPT ADSTERRA 320x50 MOBILE BANNER -->
+
+En el head del index.html:
+<!-- PEGA AQUÍ TU ADSTERRA SOCIAL BAR -->
+<!-- PEGA AQUÍ TU ADSTERRA POPUNDER -->
+
+BOTONES DE COMPARTIR en cada meme card:
+Twitter abre https://twitter.com/intent/tweet?text=TOP_TEXT&url=IMAGE_URL en target blank, color #000000.
+WhatsApp abre https://wa.me/?text=TOP_TEXT%20IMAGE_URL en target blank, color #25D366.
+Facebook abre https://www.facebook.com/sharer/sharer.php?u=IMAGE_URL en target blank, color #1877F2.
+Usar SVG inline sin librerías externas.
+Botón de descarga en cada card.
+
+DISEÑO UI: Tema oscuro con acento verde neón. Toggle de idioma con banderas 🇺🇸 🇪🇸 arriba. Fuente Bangers de Google Fonts. Mensajes de carga: 📥 Descargando video... luego 🤖 Gemini está analizando tu video... luego 🎭 Creando tus memes... Grid responsive mobile first. Cada card muestra imagen, timestamp, botones de compartir y descarga.
+
+MANEJO DE ERRORES: Video privado mostrar mensaje amigable. Video mayor a 10 minutos recortar a primeros 10 minutos. JSON inválido de Gemini reintentar una vez. Imgflip falla usar Pillow con fondo blanco.
+
+README: instrucciones pip install fastapi yt-dlp google-generativeai pillow uvicorn python-multipart, agregar GEMINI_API_KEY, IMGFLIP_USERNAME, IMGFLIP_PASSWORD, ADSTERRA_AD_URL en Replit Secrets, correr con uvicorn main:app --reload. Nota que dice busca todos los comentarios PEGA AQUÍ y reemplaza con tus scripts de Adsterra.
+
+Construye primero la estructura completa del proyecto y luego implementa cada parte paso a paso hasta que la app esté 100% funcional.

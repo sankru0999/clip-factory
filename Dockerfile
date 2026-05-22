@@ -20,4 +20,4 @@ RUN pnpm run build
 
 EXPOSE 5000
 
-CMD ["pnpm", "--filter", "@workspace/meme-factory", "run", "serve", "--", "--port", "5000"]
+CMD ["pnpm", "--filter", "@workspace/meme-factory", "run", "serve"]

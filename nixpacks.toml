@@ -3,7 +3,3 @@ cmds = ["pnpm install", "pnpm run build"]
 
 [start]
 cmd = "pnpm --filter @workspace/meme-factory run serve"
-
-[healthcheck]
-path = "/"
-timeout = 60
